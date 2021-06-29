@@ -1,6 +1,7 @@
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png" />
+    <p>message: {{ $t("hello") }}</p>
   </div>
 </template>
 
@@ -15,3 +16,10 @@ export default {
   },
 };
 </script>
+
+<i18n lang="yaml">
+en:
+  hello: "hello world!"
+ru:
+  hello: "こんにちは、世界！"
+</i18n>
