@@ -1,19 +1,31 @@
 <template>
   <div class="home">
+    <header>
+      <LanguagePicker />
+    </header>
     <img alt="Vue logo" src="../assets/logo.png" />
     <p>message: {{ $t("hello") }}</p>
   </div>
 </template>
 
 <script>
-// @ is an alias to /src
-// import HelloWorld from "@/components/HelloWorld.vue";
+import LanguagePicker from "../components/LanguagePicker";
 
 export default {
   name: "Home",
-  components: {
-    // HelloWorld,
+
+  title() {
+    return `${this.fromCurrency} to ${this.toCurrency}`;
   },
+
+  components: {
+    LanguagePicker,
+  },
+
+  data: () => ({
+    fromCurrency: "BTC",
+    toCurrency: "USD",
+  }),
 };
 </script>
 
@@ -21,5 +33,11 @@ export default {
 en:
   hello: "hello world!"
 ru:
-  hello: "こんにちは、世界！"
+  hello: "привет, мир!"
 </i18n>
+
+<style lang="scss" scoped>
+header {
+  float: right;
+}
+</style>
