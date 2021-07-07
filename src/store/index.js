@@ -1,4 +1,5 @@
 import { createStore } from "vuex";
+import network from "../network/network";
 import { isSamePair } from "../utils/coreOps";
 import PairData from "./entities/PairData";
 import wsPlugin from "./plugins/ws";
@@ -27,7 +28,12 @@ const store = createStore({
       const rateFn = selected.order ? Math.max : Math.min;
       return rateFn.apply(
         Math,
-        selected.trades.map((t) => parseFloat(t[0]))
+        selected.trades.map((t) => parseFloat(t))
+      );
+    },
+    availablePairs: (state) => (asset) => {
+      return state.available.filter((availablePair) =>
+        availablePair.pair.includes(asset)
       );
     },
   },
@@ -35,12 +41,10 @@ const store = createStore({
     [types.SELECT_PAIR](store, pairObj = store.pairs[0]) {
       store.selectedPair = pairObj;
     },
-    [types.RECEIVE_DATA](store, message) {
-      store.selectedPair.trades = message[1];
+    [types.RECEIVE_DATA](store, trades) {
+      store.selectedPair.trades = trades;
     },
-    [types.SUBSCRIBE_TO_DATA](store, pairObj) {
-      this.commit(types.SELECT_PAIR, pairObj);
-    },
+    [types.SUBSCRIBE_TO_DATA]() {},
     [types.UNSUBSCRIBE_FROM_DATA](store, pair) {
       let index = store.pairs.findIndex(
         (pairObj) =>
@@ -52,25 +56,59 @@ const store = createStore({
     [types.SET_UNSUBSCRIBE_ID](store, timeoutId) {
       store.selectedPair.unsubscriptionId = timeoutId;
     },
+    [types.SET_AVAILABLE_PAIRS](store, pairs) {
+      store.available = pairs;
+    },
   },
   actions: {
-    init({ state, dispatch }) {
+    async init({ state, dispatch }) {
       const pair = state.pairs[0];
-      dispatch("subscribeToPair", pair.curencies);
+      await dispatch("loadPairs");
+      await dispatch("loadSelectedPair", pair.curencies);
     },
-    subscribeToPair({ state, commit }, pair) {
+    async loadPairs({ commit }) {
+      const pairs = await network.getPairs();
+      const assets = await network.getAssets();
+
+      const splittedPairs = pairs.map((pairObj) => {
+        if (pairObj.wsname) {
+          return {
+            ...pairObj,
+            pair: pairObj.wsname.split("/"),
+          };
+        }
+
+        const firstAsset = assets.find((asset) => pairObj.pair.includes(asset));
+        const isFirst = pairObj.pair.startsWith(firstAsset);
+        const secondAsset = pairObj.pair.replace(firstAsset, "");
+
+        return {
+          pair: isFirst ? [firstAsset, secondAsset] : [secondAsset, firstAsset],
+          wsname: undefined,
+        };
+      });
+      commit(types.SET_AVAILABLE_PAIRS, splittedPairs);
+    },
+    async loadSelectedPair({ state, commit }, pair) {
       const previousPair = state.selectedPair;
-
-      if (!previousPair) {
-        commit(types.SUBSCRIBE_TO_DATA, state.pairs[0]);
-        return;
-      }
-
-      if (isSamePair(previousPair.curencies, pair)) return;
-
       const existingPair = state.pairs.find((p) =>
         isSamePair(p.curencies, pair)
       );
+
+      if (previousPair && isSamePair(previousPair.curencies, pair)) return;
+
+      if (!previousPair || !existingPair) {
+        const pairObj = !previousPair ? state.pairs[0] : new PairData(pair, 0);
+
+        const pairTradeInfo = await network.loadPairTicks(
+          pairObj.curencies.join("")
+        );
+
+        this.dispatch("subscribeToPair", pairObj);
+        commit(types.RECEIVE_DATA, pairTradeInfo);
+
+        return;
+      }
 
       const timeoutId = setTimeout(
         () => commit(types.UNSUBSCRIBE_FROM_DATA, previousPair.curencies),
@@ -78,13 +116,15 @@ const store = createStore({
       );
       commit(types.SET_UNSUBSCRIBE_ID, timeoutId);
 
-      if (existingPair) {
-        clearTimeout(existingPair.unsubscriptionId);
-        commit(types.SELECT_PAIR, existingPair);
-      } else {
-        const pairObj = new PairData(pair, 0);
-        commit(types.SUBSCRIBE_TO_DATA, pairObj);
-      }
+      clearTimeout(existingPair.unsubscriptionId);
+      commit(types.SELECT_PAIR, existingPair);
+    },
+    subscribeToPair({ commit, state }, pairObj) {
+      const { wsname } = state.available.find((a) =>
+        isSamePair(a.pair, pairObj.curencies)
+      );
+      commit(types.SUBSCRIBE_TO_DATA, wsname);
+      commit(types.SELECT_PAIR, pairObj);
     },
   },
 });

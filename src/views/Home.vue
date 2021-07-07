@@ -22,7 +22,7 @@ export default {
   name: "Home",
 
   title() {
-    return `${this.fromCurrency} to ${this.toCurrency}`;
+    return `${this.selectedCoinsPair[0]} to ${this.selectedCoinsPair[1]}`;
   },
 
   components: {
@@ -30,20 +30,6 @@ export default {
   },
 
   computed: { ...mapGetters(["selectedCoinsPair", "tradeRate"]) },
-
-  // data: () => ({
-  //   fromCurrency: "BTC",
-  //   toCurrency: "USD",
-  // }),
-
-  mounted() {
-    // setTimeout(() => {
-    //   this.subscribeToPair([this.fromCurrency, this.toCurrency]);
-    // }, 2000);
-    // setTimeout(() => {
-    //   this.subscribeToPair(["ETH", this.toCurrency]);
-    // }, 4000);
-  },
 
   methods: {
     ...mapActions(["subscribeToPair"]),

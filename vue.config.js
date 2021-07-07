@@ -2,17 +2,12 @@ const path = require("path");
 
 module.exports = {
   chainWebpack: (config) => {
-    // config.devServer.https(true).proxy({
-    //   "/socket": {
-    //     target: process.env.VUE_APP_WEBSOCKET_URL,
-    //     ws: true,
-    //     changeOrigin: true,
-    //     // secure: true,
-    //     // changeOrigin: true,
-    //     // autoRewrite: false,
-    //     logLevel: "debug",
-    //   },
-    // });
+    config.devServer.proxy({
+      "/api/*": {
+        target: process.env.VUE_APP_URL,
+        pathRewrite: { "/api": "" },
+      },
+    });
 
     config.module
       .rule("i18n-resource")

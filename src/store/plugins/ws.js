@@ -15,7 +15,10 @@ function commitSubscriptionData(store, message) {
   let data = JSON.parse(message.data);
   data = getValidSubscriptionData(data);
   if (!data) return;
-  store.commit(types.RECEIVE_DATA, data);
+  store.commit(
+    types.RECEIVE_DATA,
+    data[1].map((el) => el[0])
+  );
 }
 
 function subscribeFn(mutation) {
@@ -24,7 +27,7 @@ function subscribeFn(mutation) {
   let message = {
     event: subscriptionEvent,
     subscription: { name: subscriptionType },
-    pair: [mutation.payload.curencies.join("/")],
+    pair: [mutation.payload],
   };
 
   socket.send(JSON.stringify(message));

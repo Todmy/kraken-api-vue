@@ -6,7 +6,7 @@ function getTitle(vm) {
 }
 
 export default {
-  created() {
+  updated() {
     const title = getTitle(this);
     if (title) {
       document.title = title;
