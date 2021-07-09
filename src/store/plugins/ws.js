@@ -2,6 +2,7 @@ import socket from "../../network/ws";
 import types from "../mutationTypes";
 
 const subscriptionEvent = "subscribe";
+const unsubscriptionEvent = "unsubscribe";
 const subscriptionType = "trade";
 
 export default (store) => {
@@ -37,7 +38,7 @@ function unsubscribeFn(mutation) {
   if (mutation.type !== types.UNSUBSCRIBE_FROM_DATA) return;
 
   let message = {
-    event: subscriptionEvent,
+    event: unsubscriptionEvent,
     subscription: { name: subscriptionType },
     pair: [mutation.payload],
   };

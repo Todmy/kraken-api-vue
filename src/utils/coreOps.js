@@ -1,21 +1,36 @@
-import aliases from "./assetAliases.json";
+import aliases from "./assetAliases";
 
 export function isSamePair(leftPair, rightPair) {
-  const aliasKeys = Object.keys(aliases);
-  if (aliasKeys.includes(leftPair[0])) {
-    leftPair[0] = aliases[leftPair[0]];
-  }
-  if (aliasKeys.includes(leftPair[1])) {
-    leftPair[1] = aliases[leftPair[1]];
-  }
-  if (aliasKeys.includes(rightPair[0])) {
-    rightPair[0] = rightPair[leftPair[0]];
-  }
-  if (aliasKeys.includes(rightPair[1])) {
-    rightPair[1] = rightPair[leftPair[1]];
-  }
   return (
     leftPair.length === rightPair.length &&
     leftPair.every((val) => rightPair.includes(val))
   );
+}
+
+export function toAlias(pair) {
+  let resultPair = [...pair];
+  Object.entries(aliases).forEach(([key, val]) => {
+    if (pair[0] === val) {
+      resultPair[0] = key;
+    }
+    if (pair[1] === val) {
+      resultPair[1] = key;
+    }
+  });
+
+  return resultPair;
+}
+
+export function fromAlias(pair) {
+  const aliasKeys = Object.keys(aliases);
+  let resultPair = [...pair];
+
+  if (aliasKeys.includes(pair[0])) {
+    resultPair[0] = aliases[pair[0]];
+  }
+  if (aliasKeys.includes(pair[1])) {
+    resultPair[1] = aliases[pair[1]];
+  }
+
+  return resultPair;
 }
